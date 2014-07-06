@@ -1,0 +1,11 @@
+
+add_executable (cvStereoMatch
+	main)
+
+
+target_link_libraries(cvStereoMatch	
+	m 
+	opencv_core 
+	opencv_highgui
+	opencv_imgproc
+	opencv_calib3d)
