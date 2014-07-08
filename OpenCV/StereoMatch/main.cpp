@@ -28,9 +28,9 @@ void Rectify(cv::Mat & img1, cv::Mat & img2)
 	SetIntrinsics(6.144157, 0.008000, 0.008000, 416.735503, 299.154712, 0.021028, M1, D1);
 
 	Mat M2, D2;
+	SetIntrinsics(6.109411, 0.008000, 0.008000, 409.351082,  287.965287, 0.021380, M2, D2);
 
     //reading extrinsic parameters
-	const Size img_size = img1.size();
 
     Mat R, T;
     Mat R1, P1, R2, P2;
@@ -49,6 +49,7 @@ void Rectify(cv::Mat & img1, cv::Mat & img2)
     fs["R"] >> R;
     fs["T"] >> T;
 #endif
+	const Size img_size = img1.size();
     Rect roi1, roi2;
     Mat Q;
     cv::stereoRectify(
