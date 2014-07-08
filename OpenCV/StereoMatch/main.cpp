@@ -1,11 +1,10 @@
 ////////////////////////////////////////////////////////////////////////
 //
-// hello-world.cpp
-//
-// This is a simple, introductory OpenCV program. The program reads an
-// image from a file, inverts it, and displays the result.
+// Portation of stereo_match.py from samples folder of OpenCV source.
 //
 // Requires an opencv version with gtk support.
+//
+// Creation of disparity map from two rectified images
 //
 ////////////////////////////////////////////////////////////////////////
 #include <stdlib.h>
@@ -17,57 +16,57 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
+#include "Intrinsic.h"
 
 using namespace std;
 
-/**
- * @brief makeCanvas Makes composite image from the given images
- * @param vecMat Vector of Images.
- * @param windowHeight The height of the new composite image to be formed.
- * @param nRows Number of rows of images. (Number of columns will be calculated
- *              depending on the value of total number of images).
- * @return new composite image.
- */
-cv::Mat makeCanvas(std::vector<cv::Mat>& vecMat, int windowHeight, int nRows)
+void Rectify(cv::Mat & img1, cv::Mat & img2)
 {
 	using namespace cv;
 
-	int N = vecMat.size();
-	nRows  = nRows > N ? N : nRows;
-	int edgeThickness = 10;
-	int imagesPerRow = ceil(double(N) / nRows);
-	int resizeHeight = floor(2.0 * ((floor(double(windowHeight - edgeThickness) / nRows)) / 2.0)) - edgeThickness;
-	int maxRowLength = 0;
+	Mat M1, D1;
+	SetIntrinsics(6.144157, 0.008000, 0.008000, 416.735503, 299.154712, 0.021028, M1, D1);
 
-	std::vector<int> resizeWidth;
-	for (int i = 0; i < N;) {
-			int thisRowLen = 0;
-			for (int k = 0; k < imagesPerRow; k++) {
-					double aspectRatio = double(vecMat[i].cols) / vecMat[i].rows;
-					int temp = int( ceil(resizeHeight * aspectRatio));
-					resizeWidth.push_back(temp);
-					thisRowLen += temp;
-					if (++i == N) break;
-			}
-			if ((thisRowLen + edgeThickness * (imagesPerRow + 1)) > maxRowLength) {
-					maxRowLength = thisRowLen + edgeThickness * (imagesPerRow + 1);
-			}
-	}
-	int windowWidth = maxRowLength;
-	cv::Mat canvasImage(windowHeight, windowWidth, CV_8UC3, Scalar(0, 0, 0));
+	Mat M2, D2;
 
-	for (int k = 0, i = 0; i < nRows; i++) {
-			int y = i * resizeHeight + (i + 1) * edgeThickness;
-			int x_end = edgeThickness;
-			for (int j = 0; j < imagesPerRow && k < N; k++, j++) {
-					int x = x_end;
-					cv::Rect roi(x, y, resizeWidth[k], resizeHeight);
-					cv::Mat target_ROI = canvasImage(roi);
-					cv::resize(vecMat[k], target_ROI, target_ROI.size());
-					x_end += resizeWidth[k] + edgeThickness;
-			}
-	}
-	return canvasImage;
+    //reading extrinsic parameters
+	const Size img_size = img1.size();
+
+    Mat R, T;
+    Mat R1, P1, R2, P2;
+
+    //Rotation vector world coordinates
+
+    //Cam1
+    //dblarray1 m_Txyz[3] =   448.068850  209.964202  -854.624918
+    //dblarray1 m_Rxyz[3] =   0.002756  0.069707  -3.140204
+
+    //Cam2
+    //dblarray1 m_Txyz[3] =   404.649962  190.829853  -914.463886
+    //dblarray1 m_Rxyz[3] =   0.022905  -0.060373  -3.139953
+
+#if 0
+    fs["R"] >> R;
+    fs["T"] >> T;
+#endif
+    Rect roi1, roi2;
+    Mat Q;
+    cv::stereoRectify(
+    		// --> in
+    		M1, D1, M2, D2, img_size, R, T,
+    		// --> out
+    		R1, R2, P1, P2, Q, CALIB_ZERO_DISPARITY, -1, img_size, &roi1, &roi2 );
+
+    Mat map11, map12, map21, map22;
+    cv::initUndistortRectifyMap(M1, D1, R1, P1, img_size, CV_16SC2, map11, map12);
+    cv::initUndistortRectifyMap(M2, D2, R2, P2, img_size, CV_16SC2, map21, map22);
+
+    Mat img1r, img2r;
+    cv::remap(img1, img1r, map11, map12, INTER_LINEAR);
+    cv::remap(img2, img2r, map21, map22, INTER_LINEAR);
+
+    img1 = img1r;
+    img2 = img2r;
 }
 
 int main(int argc, char *argv[])
@@ -75,13 +74,17 @@ int main(int argc, char *argv[])
 	using namespace cv;
 
 	Mat matLDownScaledL;
-	pyrDown(imread("/home/rdr/data/OpenCV/opencv-2.4.9/samples/gpu/aloeL.jpg"), matLDownScaledL);
+
+	//pyrDown(imread("/home/rdr/data/OpenCV/opencv-2.4.9/samples/gpu/aloeL.jpg"), matLDownScaledL);
+	pyrDown(imread("/home/rdr/data/StereoTestImages/F_140630/j00097_2.png"), matLDownScaledL);
 
 	Mat matLDownScaledR;
-	pyrDown(imread("/home/rdr/data/OpenCV/opencv-2.4.9/samples/gpu/aloeR.jpg"), matLDownScaledR);
+	//pyrDown(imread("/home/rdr/data/OpenCV/opencv-2.4.9/samples/gpu/aloeR.jpg"), matLDownScaledR);
+	pyrDown(imread("/home/rdr/data/StereoTestImages/F_140630/j00097_1.png"), matLDownScaledR);
 
 	IplImage imgL(matLDownScaledL);
 	IplImage imgR(matLDownScaledR);
+
 
 	// --- disparity ---
 
@@ -121,6 +124,31 @@ int main(int argc, char *argv[])
 	const Mat disp2Show( (disp - offset) * scale );
 
 	// --- 3D Punktwolke ---
+	const float h = imgL.height;
+	const float w = imgL.width;
+	const float f = 0.8*w;// guess for focal length
+
+	// Q – 4 x 4 perspective transformation matrix that can be obtained with stereoRectify().
+	// turn points 180 deg around x-axis, so that y-axis looks up
+	const Matx44f Q(1, 0, 0, -0.5*w,
+			0,-1, 0,  0.5*h,
+			0, 0, 0,     -f,
+			0, 0, 1,      0);
+
+	//reprojectImageTo3D(InputArray disparity, OutputArray _3dImage, InputArray Q, bool handle-MissingValues=false, int ddepth=-1 )
+	Mat points;
+	cv::reprojectImageTo3D(disp, points, Q);
+
+	Mat colors;
+	cv::cvtColor( matLDownScaledL, colors, cv::COLOR_BGR2RGB);
+    //mask = disp > disp.min()
+    //out_points = points[mask]
+    //out_colors = colors[mask]
+    //out_fn = 'out.ply'
+    //write_ply('out.ply', out_points, out_colors)
+
+    cout << "Saved 3D point cloud." << endl;
+
 	// ... fehlt noch :-)
 	cv::minMaxIdx( disp2Show, &minVal, &maxVal);
 	cout << "min/max val : " << minVal << "/ " << maxVal << endl;
