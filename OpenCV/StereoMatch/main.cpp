@@ -38,7 +38,7 @@ void Rectify(cv::Mat & img1, cv::Mat & img2)
 	cout << "M2 = " << M2 << endl;
 	cout << "D2 = " << D2 << endl;
 
-    //reading extrinsic parameters
+	//reading extrinsic parameters
 	//http://answers.opencv.org/question/7617/extrinsicyml-meanings/
 	//https://code.google.com/p/stereoview/source/browse/trunk/extrinsics.yml?r=20
 
@@ -53,11 +53,11 @@ void Rectify(cv::Mat & img1, cv::Mat & img2)
 	 * T – Translation vector between coordinate systems of the cameras.
 	 * rows: 3, cols: 1
 	 **/
-    float tdata[] = { 448.068850 - 404.649962,  209.964202 - 190.829853,  -854.624918 - (-914.463886) };
+	float tdata[] = { 448.068850 - 404.649962,  209.964202 - 190.829853,  -854.624918 - (-914.463886) };
 	cv::Mat T = Mat(3, 1, CV_64F, tdata).clone();
 
-    Mat R1, P1, R2, P2;
-    //Rotation vector world coordinates
+	Mat R1, P1, R2, P2;
+	//Rotation vector world coordinates
 
     //Cam1
     //dblarray1 m_Txyz[3] =   448.068850  209.964202  -854.624918
@@ -87,6 +87,17 @@ void Rectify(cv::Mat & img1, cv::Mat & img2)
 
     img1 = img1r;
     img2 = img2r;
+
+	//Bildanzeige
+    IplImage iplImage1(img1);
+	cvNamedWindow("mainWin1", CV_WINDOW_AUTOSIZE);
+	cvShowImage("mainWin1", &iplImage1 );
+
+    IplImage iplImage2(img2);
+	cvNamedWindow("mainWin2", CV_WINDOW_AUTOSIZE);
+	cvShowImage("mainWin2", &iplImage2 );
+
+	cvWaitKey(0); // wait for a key
 }
 
 void Disparity()
