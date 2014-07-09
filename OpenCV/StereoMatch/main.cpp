@@ -18,23 +18,45 @@
 
 #include "Intrinsic.h"
 
+//Todo : test findCirclesGrid
+
 using namespace std;
 
 void Rectify(cv::Mat & img1, cv::Mat & img2)
 {
 	using namespace cv;
 
+	cout << "images size = " << img1.size() << " "<< img2.size() << endl;
+
 	Mat M1, D1;
 	SetIntrinsics(6.144157, 0.008000, 0.008000, 416.735503, 299.154712, 0.021028, M1, D1);
+	cout << "M1 = " << M1 << endl;
+	cout << "D1 = " << D1 << endl;
 
 	Mat M2, D2;
 	SetIntrinsics(6.109411, 0.008000, 0.008000, 409.351082,  287.965287, 0.021380, M2, D2);
+	cout << "M2 = " << M2 << endl;
+	cout << "D2 = " << D2 << endl;
 
     //reading extrinsic parameters
+	//http://answers.opencv.org/question/7617/extrinsicyml-meanings/
+	//https://code.google.com/p/stereoview/source/browse/trunk/extrinsics.yml?r=20
 
-    Mat R, T;
+	//See cv::stereoRectify
+	/*!
+	 * R – Rotation matrix between the coordinate systems of the first and the second cameras.
+	 * rows: 3,  cols: 3
+	 **/
+	float rdata[] = { 1.1, 0.1, 0.1,    0.1, 1.2, -0.1,    0.1, 0.1, 1.01 };
+	cv::Mat R = Mat(3, 3, CV_64F, rdata).clone();
+	/*!
+	 * T – Translation vector between coordinate systems of the cameras.
+	 * rows: 3, cols: 1
+	 **/
+    float tdata[] = { 448.068850 - 404.649962,  209.964202 - 190.829853,  -854.624918 - (-914.463886) };
+	cv::Mat T = Mat(3, 1, CV_64F, tdata).clone();
+
     Mat R1, P1, R2, P2;
-
     //Rotation vector world coordinates
 
     //Cam1
@@ -45,13 +67,10 @@ void Rectify(cv::Mat & img1, cv::Mat & img2)
     //dblarray1 m_Txyz[3] =   404.649962  190.829853  -914.463886
     //dblarray1 m_Rxyz[3] =   0.022905  -0.060373  -3.139953
 
-#if 0
-    fs["R"] >> R;
-    fs["T"] >> T;
-#endif
 	const Size img_size = img1.size();
     Rect roi1, roi2;
     Mat Q;
+
     cv::stereoRectify(
     		// --> in
     		M1, D1, M2, D2, img_size, R, T,
@@ -70,7 +89,7 @@ void Rectify(cv::Mat & img1, cv::Mat & img2)
     img2 = img2r;
 }
 
-int main(int argc, char *argv[])
+void Disparity()
 {
 	using namespace cv;
 
@@ -173,8 +192,19 @@ int main(int argc, char *argv[])
 
 
 	cvWaitKey(0); // wait for a key
+}
+int main(int argc, char *argv[])
+{
+#if 1
+	using namespace cv;
 
+	cv::Mat img1 = imread("/home/rdr/data/StereoTestImages/F_140630/j00097_2.png");
+	cv::Mat img2 = imread("/home/rdr/data/StereoTestImages/F_140630/j00097_1.png");
+
+	Rectify(img1, img2);
+#else
+	Disparity();
+#endif
 	return 0;
-
 	//MeshLab
 }
