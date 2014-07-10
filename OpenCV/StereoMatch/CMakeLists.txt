@@ -3,7 +3,8 @@ add_executable (cvStereoMatch
 	main
 	Intrinsic
 	Extrinsic
-	Rectify)
+	Rectify
+	Disparity)
 
 
 target_link_libraries(cvStereoMatch	
