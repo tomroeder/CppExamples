@@ -1,7 +1,8 @@
 
 add_executable (cvStereoMatch
 	main
-	Intrinsic.cpp)
+	Intrinsic.cpp
+	Extrinsic.cpp)
 
 
 target_link_libraries(cvStereoMatch	

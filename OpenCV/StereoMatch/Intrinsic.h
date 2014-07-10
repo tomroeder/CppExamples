@@ -35,7 +35,7 @@ void SetIntrinsics(float f_mm,
 		float m_dy,/* von m_dxy bzw. m_dpxy */
 		float cx_pix, //!  center x in pixel
 		float cy_pix, //!  center y in pixel
-		float k1, // kappa1 lens distortion
+		double k1, // kappa1 lens distortion
 		cv::Mat & M, cv::Mat & D);
 
 #endif /* INTRINSIC_H_ */

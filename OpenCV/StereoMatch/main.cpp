@@ -17,6 +17,7 @@
 #include <opencv/highgui.h>
 
 #include "Intrinsic.h"
+#include "Extrinsic.h"
 
 //Todo : test findCirclesGrid
 
@@ -38,26 +39,15 @@ void Rectify(cv::Mat & img1, cv::Mat & img2)
 	cout << "M2 = " << M2 << endl;
 	cout << "D2 = " << D2 << endl;
 
-	//reading extrinsic parameters
-	//http://answers.opencv.org/question/7617/extrinsicyml-meanings/
-	//https://code.google.com/p/stereoview/source/browse/trunk/extrinsics.yml?r=20
+	cv::Mat R, T;
+	SetExtrinsics( R, T );
 
-	//See cv::stereoRectify
-	/*!
-	 * R – Rotation matrix between the coordinate systems of the first and the second cameras.
-	 * rows: 3,  cols: 3
-	 **/
-	float rdata[] = { 1.1, 0.1, 0.1,    0.1, 1.2, -0.1,    0.1, 0.1, 1.01 };
-	cv::Mat R = Mat(3, 3, CV_64F, rdata).clone();
-	/*!
-	 * T – Translation vector between coordinate systems of the cameras.
-	 * rows: 3, cols: 1
-	 **/
-	float tdata[] = { 448.068850 - 404.649962,  209.964202 - 190.829853,  -854.624918 - (-914.463886) };
-	cv::Mat T = Mat(3, 1, CV_64F, tdata).clone();
+	cout << "R = " << R << endl;
 
 	Mat R1, P1, R2, P2;
 	//Rotation vector world coordinates
+
+	//see world_coord_to_image_coord
 
     //Cam1
     //dblarray1 m_Txyz[3] =   448.068850  209.964202  -854.624918
@@ -85,8 +75,8 @@ void Rectify(cv::Mat & img1, cv::Mat & img2)
     cv::remap(img1, img1r, map11, map12, INTER_LINEAR);
     cv::remap(img2, img2r, map21, map22, INTER_LINEAR);
 
-    img1 = img1r;
-    img2 = img2r;
+    pyrDown(img1r, img1);//Downscaling
+    pyrDown(img2r, img2);
 
 	//Bildanzeige
     IplImage iplImage1(img1);
@@ -209,8 +199,8 @@ int main(int argc, char *argv[])
 #if 1
 	using namespace cv;
 
-	cv::Mat img1 = imread("/home/rdr/data/StereoTestImages/F_140630/j00097_2.png");
-	cv::Mat img2 = imread("/home/rdr/data/StereoTestImages/F_140630/j00097_1.png");
+	cv::Mat img1 = imread("/home/rdr/data/StereoTestImages/F_140630/j00097_1.png");
+	cv::Mat img2 = imread("/home/rdr/data/StereoTestImages/F_140630/j00097_2.png");
 
 	Rectify(img1, img2);
 #else
