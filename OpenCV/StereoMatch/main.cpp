@@ -1,94 +1,17 @@
-////////////////////////////////////////////////////////////////////////
-//
-// Portation of stereo_match.py from samples folder of OpenCV source.
-//
-// Requires an opencv version with gtk support.
-//
-// Creation of disparity map from two rectified images
-//
-////////////////////////////////////////////////////////////////////////
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+//#include <stdlib.h>
+//#include <stdio.h>
+//#include <math.h>
 
 #include <iostream>
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include "Intrinsic.h"
-#include "Extrinsic.h"
+#include "Rectify.h"
 
 //Todo : test findCirclesGrid
 
 using namespace std;
-
-void Rectify(cv::Mat & img1, cv::Mat & img2)
-{
-	using namespace cv;
-
-	cout << "images size = " << img1.size() << " "<< img2.size() << endl;
-
-	Mat M1, D1;
-	SetIntrinsics(6.144157, 0.008000, 0.008000, 416.735503, 299.154712, 0.021028, M1, D1);
-	cout << "M1 = " << M1 << endl;
-	cout << "D1 = " << D1 << endl;
-
-	Mat M2, D2;
-	SetIntrinsics(6.109411, 0.008000, 0.008000, 409.351082,  287.965287, 0.021380, M2, D2);
-	cout << "M2 = " << M2 << endl;
-	cout << "D2 = " << D2 << endl;
-
-	cv::Mat R, T;
-	SetExtrinsics( R, T );
-
-	cout << "R = " << R << endl;
-
-	Mat R1, P1, R2, P2;
-	//Rotation vector world coordinates
-
-	//see world_coord_to_image_coord
-
-    //Cam1
-    //dblarray1 m_Txyz[3] =   448.068850  209.964202  -854.624918
-    //dblarray1 m_Rxyz[3] =   0.002756  0.069707  -3.140204
-
-    //Cam2
-    //dblarray1 m_Txyz[3] =   404.649962  190.829853  -914.463886
-    //dblarray1 m_Rxyz[3] =   0.022905  -0.060373  -3.139953
-
-	const Size img_size = img1.size();
-    Rect roi1, roi2;
-    Mat Q;
-
-    cv::stereoRectify(
-    		// --> in
-    		M1, D1, M2, D2, img_size, R, T,
-    		// --> out
-    		R1, R2, P1, P2, Q, CALIB_ZERO_DISPARITY, -1, img_size, &roi1, &roi2 );
-
-    Mat map11, map12, map21, map22;
-    cv::initUndistortRectifyMap(M1, D1, R1, P1, img_size, CV_16SC2, map11, map12);
-    cv::initUndistortRectifyMap(M2, D2, R2, P2, img_size, CV_16SC2, map21, map22);
-
-    Mat img1r, img2r;
-    cv::remap(img1, img1r, map11, map12, INTER_LINEAR);
-    cv::remap(img2, img2r, map21, map22, INTER_LINEAR);
-
-    pyrDown(img1r, img1);//Downscaling
-    pyrDown(img2r, img2);
-
-	//Bildanzeige
-    IplImage iplImage1(img1);
-	cvNamedWindow("mainWin1", CV_WINDOW_AUTOSIZE);
-	cvShowImage("mainWin1", &iplImage1 );
-
-    IplImage iplImage2(img2);
-	cvNamedWindow("mainWin2", CV_WINDOW_AUTOSIZE);
-	cvShowImage("mainWin2", &iplImage2 );
-
-	cvWaitKey(0); // wait for a key
-}
 
 void Disparity()
 {
