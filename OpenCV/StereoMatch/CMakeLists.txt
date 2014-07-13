@@ -1,6 +1,7 @@
 
 add_executable (cvStereoMatch
 	main
+	CalibrationPoints
 	Intrinsic
 	Extrinsic
 	Rectify

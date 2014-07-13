@@ -3,6 +3,6 @@
 
 #include <opencv/cv.h>
 
-void Rectify(cv::Mat & img1, cv::Mat & img2);
+void Rectify(cv::Mat & img1, cv::Mat & img2, bool doCalibration);
 
 #endif

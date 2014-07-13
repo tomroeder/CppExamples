@@ -3,6 +3,8 @@
 
 #include <opencv/cv.h>
 
+void InitIntrinsics(cv::Mat & M1, cv::Mat & D1, cv::Mat & M2, cv::Mat & D2);
+
 /*!
  * Intrinsic parameters
  *

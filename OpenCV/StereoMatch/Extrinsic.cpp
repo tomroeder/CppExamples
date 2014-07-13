@@ -13,6 +13,7 @@ void SetExtrinsics(cv::Mat & r, cv::Mat & t)
 	const cv::Mat RCam2 = cv::Mat(3, 3, CV_64F, rCam2data).clone();
 
 	r = RCam2 * RCam1.t();// R = (Rc_2)(Rc_1^T)
+	//r = RCam1 * RCam2.t();// R = (Rc_2)(Rc_1^T)
 
 	cv::Mat angles_deg;
 
@@ -32,6 +33,7 @@ void SetExtrinsics(cv::Mat & r, cv::Mat & t)
 	const cv::Mat tCam2 = cv::Mat(3, 1, CV_64F, tCam2data).clone();
 
 	t = tCam1 - r.t() * tCam2; //T = Tc_1 - (R^T)(Tc_2),
+	//t = tCam2 - r.t() * tCam1; //T = Tc_1 - (R^T)(Tc_2),
 
 	cout << "T = " << t << endl;
 }

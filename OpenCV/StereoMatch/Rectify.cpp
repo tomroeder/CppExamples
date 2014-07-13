@@ -2,30 +2,74 @@
 
 #include "Intrinsic.h"
 #include "Extrinsic.h"
+#include "CalibrationPoints.h"
 
 #include <iostream>
 
 using namespace std;
 
-void Rectify(cv::Mat & img1, cv::Mat & img2)
+void Calibrate(cv::Mat & M1, cv::Mat & D1, cv::Mat & M2, cv::Mat & D2, cv::Mat & R, cv::Mat & T)
 {
-	cv::Mat M1, D1;
-	SetIntrinsics(6.144157, 0.008000, 0.008000, 416.735503, 299.154712, 0.021028, M1, D1);
+	const std::vector< std::vector<cv::Point2f> > imagePointsCam1 = InitImageCoordCam1();
+	const std::vector< std::vector<cv::Point2f> > imagePointsCam2 = InitImageCoordCam2();
+	const std::vector< std::vector<cv::Point3f> > objectPoints = InitWorld();
+
+	const cv::Size imageSize(800, 600);
+
+	InitIntrinsics(M1, D1, M2, D2);
+
 	cout << "M1 = " << M1 << endl;
 	cout << "D1 = " << D1 << endl;
+	cout << "M2 = " << M1 << endl;
+	cout << "D2 = " << D1 << endl;
 
-	cv::Mat M2, D2;
-	SetIntrinsics(6.109411, 0.008000, 0.008000, 409.351082,  287.965287, 0.021380, M2, D2);
-	cout << "M2 = " << M2 << endl;
-	cout << "D2 = " << D2 << endl;
+	cv::Mat E, F;
 
-	//Rotation, Translation vector of Camera 1 vs. Camera 2 in world coordinates
+	double ret = cv::stereoCalibrate(objectPoints,
+			imagePointsCam1,imagePointsCam2,
+			M1, D1, M2, D2,
+			imageSize,
+			R, T, E, F,
+			cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 1e-6)
+			//, cv::CALIB_SAME_FOCAL_LENGTH /*cv::CALIB_FIX_INTRINSIC*/
+		);
+
+	cout << "M1 = " << M1 << endl;
+	cout << "D1 = " << D1 << endl;
+	cout << "M2 = " << M1 << endl;
+	cout << "D2 = " << D1 << endl;
+
+	cout << "R = " << R << endl;
+	cout << "T = " << T << endl;
+	cout << "E = " << E << endl;
+	cout << "F = " << F << endl;
+}
+
+void Rectify(cv::Mat & imgCam1Right, cv::Mat & imgCam2Left, bool doCalibration)
+{
+	cv::Mat M1, D1, M2, D2;
 	cv::Mat R, T;
-	SetExtrinsics( R, T );
+
+	if (doCalibration)
+	{
+		 Calibrate(M1, D1, M2, D2, R, T);
+	}
+	else
+	{
+		InitIntrinsics(M1, D1, M2, D2);
+
+		cout << "M1 = " << M1 << endl;
+		cout << "D1 = " << D1 << endl;
+		cout << "M2 = " << M2 << endl;
+		cout << "D2 = " << D2 << endl;
+
+		//Rotation, Translation vector of Camera 1 vs. Camera 2 in world coordinates
+		SetExtrinsics( R, T );
+	}
 
 	cv::Mat R1, P1, R2, P2;
 
-	const cv::Size img_size = img1.size();
+	const cv::Size img_size = imgCam1Right.size();
 	cv::Rect roi1, roi2;
 	cv::Mat Q;
 
@@ -40,10 +84,12 @@ void Rectify(cv::Mat & img1, cv::Mat & img2)
 	cv::initUndistortRectifyMap(M2, D2, R2, P2, img_size, CV_16SC2, map21, map22);
 
 	cv::Mat img1r, img2r;
-	cv::remap(img1, img1r, map11, map12, cv::INTER_LINEAR);
-	cv::remap(img2, img2r, map21, map22, cv::INTER_LINEAR);
+	cv::remap(imgCam1Right, img1r, map11, map12, cv::INTER_LINEAR);
+	cv::remap(imgCam2Left, img2r, map21, map22, cv::INTER_LINEAR);
+	//cv::remap(imgCam2Left, img1r, map11, map12, cv::INTER_LINEAR);
+	//cv::remap(imgCam1Right, img2r, map21, map22, cv::INTER_LINEAR);
 
-	img1 = img1r;
-	img2 = img2r;
+	imgCam1Right = img1r;
+	imgCam2Left = img2r;
 }
 
